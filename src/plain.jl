@@ -663,6 +663,16 @@ function close(obj::HDF5Dataspace)
     nothing
 end
 
+# mounting
+function h5mount(loc::HDF5File, location::AbstractString, child::HDF5File)
+    h5f_mount(loc, location, child, H5P_DEFAULT)
+end
+
+# unmounting
+function h5unmount(obj::HDF5File, location::AbstractString)
+    h5f_unmount(obj, location)
+end
+
 # Testing file type
 ishdf5(name::AbstractString) = h5f_is_hdf5(name)
 
@@ -1817,6 +1827,8 @@ function h5d_write{T<:Union(HDF5BitsKind,CharType)}(dataset_id::Hid, memtype_id:
 end
 h5f_create(filename::ByteString) = h5f_create(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)
 h5f_open(filename::ByteString, mode) = h5f_open(filename, mode, H5P_DEFAULT)
+#h5f_mount(loc::Hid, name::ByteString, child::Hid) = h5f_mount(loc, name, child, H5P_DEFAULT)
+#h5f_unmount(loc::Hid, name::ByteString) = h5f_unmount(loc, name)
 h5g_create(obj_id::Hid, name::ByteString) = h5g_create(obj_id, name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)
 h5g_create(obj_id::Hid, name::ByteString, lcpl_id, gcpl_id) = h5g_create(obj_id, name, lcpl_id, gcpl_id, H5P_DEFAULT)
 h5g_open(file_id::Hid, name::ByteString) = h5g_open(file_id, name, H5P_DEFAULT)
@@ -1889,6 +1901,8 @@ for (jlname, h5name, outtype, argtypes, argsyms, msg) in
      (:h5f_close, :H5Fclose, Herr, (Hid,), (:file_id,), "Error closing file"),
      (:h5f_flush, :H5Fflush, Herr, (Hid, Cint), (:object_id, :scope,), "Error flushing object to file"),
      (:h5f_get_vfd_handle, :H5Fget_vfd_handle, Herr, (Hid, Hid, Ptr{Ptr{Cint}}), (:file_id, :fapl_id, :file_handle), "Error getting VFD handle"),
+     (:h5f_mount, :H5Fmount, Herr, (Hid, Ptr{UInt8}, Hid, Hid), (:loc_id, :name, :child_id, :fmpl_id), "Error mounting file"),
+     (:h5f_unmount, :H5Funmount, Herr, (Hid, Ptr{UInt8}), (:loc_id, :name), "Error unmounting file"),
      (:h5g_close, :H5Gclose, Herr, (Hid,), (:group_id,), "Error closing group"),
      (:h5g_get_info, :H5Gget_info, Herr, (Hid, Ptr{H5Ginfo}), (:group_id, :buf), "Error getting group info"),
      (:h5o_get_info, :H5Oget_info, Herr, (Hid, Ptr{H5Oinfo}), (:object_id, :buf), "Error getting object info"),
@@ -2247,7 +2261,9 @@ export
     t_create,
     t_commit,
     write,
-    @write
+    @write,
+    h5mount,
+    h5unmount
 
 # Across initializations of the library, the id of various properties
 # will change. So don't hard-code the id (important for precompilation)
